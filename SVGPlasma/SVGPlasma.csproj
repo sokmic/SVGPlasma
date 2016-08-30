@@ -58,6 +58,8 @@
     <Compile Include="SVGObject.cs" />
     <Compile Include="SVGPath.cs" />
     <Compile Include="SVGPoint.cs" />
+    <Compile Include="SVGToken.cs" />
+    <Compile Include="SVGTokenStream.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

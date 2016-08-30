@@ -13,6 +13,17 @@ namespace SVGPlasma
 
         public void Parse(string path)
         {
+            byte[] txt = System.Text.Encoding.ASCII.GetBytes(path);
+            System.IO.MemoryStream ms = new System.IO.MemoryStream(txt);
+            SVGTokenStream ts = new SVGTokenStream(ms);
+
+
+
+
+
+
+
+
             //read in the path
             ParseCommand(path);
             //create objects from the path (individual cuts to make)
