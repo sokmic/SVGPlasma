@@ -55,11 +55,16 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SVGCommand.cs" />
-    <Compile Include="SVGObject.cs" />
+    <Compile Include="SVGCommandGroup.cs" />
+    <Compile Include="SVGCoord.cs" />
+    <Compile Include="SVGParameter.cs" />
     <Compile Include="SVGPath.cs" />
-    <Compile Include="SVGPoint.cs" />
+    <Compile Include="SVGCoordPair.cs" />
     <Compile Include="SVGToken.cs" />
     <Compile Include="SVGTokenStream.cs" />
+    <Compile Include="SVGDoubleCoordPair.cs" />
+    <Compile Include="SVGEArcArgs.cs" />
+    <Compile Include="SVGTripleCoordPair.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

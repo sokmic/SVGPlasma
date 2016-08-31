@@ -66,6 +66,7 @@ namespace SVGPlasma
                 p.Parse(svgobj);
             }
 
+            /*
             //adjust for the width of the cutter
             if (gcmach.CutWidth > 0)
             {
@@ -162,23 +163,24 @@ namespace SVGPlasma
             }
             sout.Write(gcmach.EndCode);
             sout.WriteLine();
-            sout.Close();
+            */
+            sout.Close();             
             MessageBox.Show("File generated");
         }
 
-        private SVGPoint GetNormal(SVGPoint p1, SVGPoint p2)
+        private SVGCoordPair GetNormal(SVGCoordPair p1, SVGCoordPair p2)
         {
             if (p1.xOrig == p2.xOrig)
             {
                 //vertical line
                 //normal is horizontal line
-                return new SVGPoint(1, 0);                
+                return new SVGCoordPair(1, 0);                
             }
             if (p1.yOrig == p2.yOrig)
             {
                 //horizontal line
                 //normal is a vertical line
-                return new SVGPoint(0, 1);
+                return new SVGCoordPair(0, 1);
             }
             //calculate the slope of the line
             decimal a = (p2.yOrig - p1.yOrig) / (p2.xOrig - p1.xOrig);
@@ -188,7 +190,7 @@ namespace SVGPlasma
             return GetPoint(an, 1);            
         }
 
-        private SVGPoint GetPoint(decimal a, decimal l)
+        private SVGCoordPair GetPoint(decimal a, decimal l)
         {
             // y=ax  and l^2 = x^2 + y^2
             // l^2 = x^2 + (ax)^2
@@ -198,7 +200,7 @@ namespace SVGPlasma
             decimal x = (decimal)Math.Sqrt(Math.Pow((double)l,2) / (Math.Pow((double)a, 2) + 1));
             decimal y = a * x;
 
-            return new SVGPoint(x, y);
+            return new SVGCoordPair(x, y);
         }
     }
 }

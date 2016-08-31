@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SVGPlasma
-{    
-    class SVGObject
+{
+    class SVGCommandGroup
     {
-        public System.Collections.Generic.List<SVGPoint> points = new List<SVGPoint>();
-
+        public System.Collections.Generic.List<SVGCommand> commands = new List<SVGCommand>();
+        /*
         public SVGPoint this[int index]
         {
             get
@@ -25,7 +25,7 @@ namespace SVGPlasma
         public bool isPointInside(SVGPoint p)
         {
             //the SVGObject passed in will have the "origin" vertex specified twice.  Remove one copy for this.
-            SVGObject polygon = new SVGObject();
+            SVGCommandGroup polygon = new SVGCommandGroup();
             for (int j = 1; j < this.points.Count; j++)
             {
                 polygon.points.Add(this.points[j]);
@@ -116,7 +116,7 @@ namespace SVGPlasma
             if (o4 == 0 && onSegment(p2, q1, q2)) return true;
 
             return false; // Doesn't fall in any of the above cases
-        }
+        }*/
 
     }
 

@@ -15,7 +15,7 @@ namespace SVGPlasma
     class SVGCommand
     {
         public string command { get; set; }
-        public SVGPoint point { get; set; }
+        public List<SVGParameter> pars = new List<SVGParameter>();
         public SVGCmdType type { get; set; }
     }
 }

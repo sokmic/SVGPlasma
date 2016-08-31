@@ -6,26 +6,26 @@ using System.Threading.Tasks;
 
 namespace SVGPlasma
 {
-    class SVGPoint
+    class SVGCoordPair: SVGParameter
     {
         public decimal x { get; set; }
         public decimal y { get; set; }
         public decimal xOrig { get; set; }
         public decimal yOrig { get; set; }
 
-        public SVGPoint()
+        public SVGCoordPair()
         {
             x = decimal.MinValue;
             y = decimal.MinValue;
         }
 
-        public SVGPoint(decimal x, decimal y)
+        public SVGCoordPair(decimal x, decimal y)
         {
             this.x = x;
             this.y = y;            
         }
 
-        public void Add(SVGPoint p)
+        public void Add(SVGCoordPair p)
         {
             this.x += p.x;
             this.y += p.y;

@@ -11,13 +11,15 @@ namespace SVGPlasma
         Whitespace,
         Command,
         Number,
-        Comma
+        Comma,        
+        Error,
+        EOP
     }
 
     class SVGToken
     {
-        string value { get; set; }
-        TokenType tokType { get; set; }
+        public string value { get; set; }
+        public TokenType tokType { get; set; }
 
         public SVGToken(string val, TokenType tok)
         {
