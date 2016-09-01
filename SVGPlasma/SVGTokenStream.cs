@@ -90,6 +90,8 @@ namespace SVGPlasma
             }                                  
         }        
         //optional sign already eaten
+		//need to handle:
+		// .0. - send straight to fsmFrac and handle "." in there
         private SVGToken fsmNumber(string s)
         {
             if (sr.EndOfStream)
