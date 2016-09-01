@@ -82,16 +82,15 @@ namespace SVGPlasma
                 case '6':
                 case '7':
                 case '8':
-                case '9':
-                case '.':
+                case '9':                
                     return fsmNumber(new string(c, 1));
+                case '.':
+                    return fsmFrac(new string(c, 1));
                 default:
                     return new SVGToken(new string(c, 1), TokenType.Error);
             }                                  
         }        
-        //optional sign already eaten
-		//need to handle:
-		// .0. - send straight to fsmFrac and handle "." in there
+        
         private SVGToken fsmNumber(string s)
         {
             if (sr.EndOfStream)
@@ -133,6 +132,7 @@ namespace SVGPlasma
                     return new SVGToken(s, TokenType.Number);
             }                            
         }
+
         private SVGToken fsmFrac(string s)
         {
             if (sr.EndOfStream)
@@ -143,6 +143,10 @@ namespace SVGPlasma
                     //put back the "." and error the sign
                     sr.BaseStream.Seek(-1, System.IO.SeekOrigin.Current);
                     return new SVGToken(s.Substring(0, 1), TokenType.Error);
+                }
+                else if (s == ".")
+                {
+                    return new SVGToken(s, TokenType.Error);
                 }
                 return new SVGToken(s, TokenType.Number);          
             }
@@ -185,6 +189,10 @@ namespace SVGPlasma
                         //put back the "." and error the sign
                         sr.BaseStream.Seek(-1, System.IO.SeekOrigin.Current);
                         return new SVGToken(s.Substring(0, 1), TokenType.Error);
+                    }
+                    else if (s == ".")
+                    {
+                        return new SVGToken(s, TokenType.Error);
                     }
                     return new SVGToken(s, TokenType.Number);            
             }

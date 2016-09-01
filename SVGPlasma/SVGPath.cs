@@ -11,26 +11,118 @@ namespace SVGPlasma
         public System.Collections.Generic.List<SVGCommandGroup> cmdgroups = new List<SVGCommandGroup>();
         SVGTokenStream ts;
 
+        //Parses the SVG file and prepares it for gcode generation
         public void Parse(string path)
         {
+            
             byte[] txt = System.Text.Encoding.ASCII.GetBytes(path);
             System.IO.MemoryStream ms = new System.IO.MemoryStream(txt);
             ts = new SVGTokenStream(ms);
             ParseCommandGroups();
 
+            NormalizeCommands();
 
+            CalcCurves();
 
-
-
-
-            /*
-            //read in the path
-            ParseCommand(path);
             //create objects from the path (individual cuts to make)
-            CreateObjects();
+            //CreateObjects();
             //sort the objects, inner most to outer most
-            SortObjects();            
-            */
+            //SortObjects();            
+            
+        }
+
+        //Breaks any commands with multiple argument sets into individual command objects
+        //Also convert H and V commands to L commands for ease of handling
+        private void NormalizeCommands()
+        {
+            for(int i = 0; i< cmdgroups.Count;i++)
+            {
+                SVGCommandGroup sg = cmdgroups[i];
+                SVGCoordPair lastmove = null;
+                decimal lastx = 0;
+                decimal lasty = 0;
+                for(int j = 0; j < sg.commands.Count; j++)
+                {
+                    SVGCommand cmd = sg.commands[j];                    
+                    string clonecmd = cmd.command;
+                    if (clonecmd == "M")
+                        clonecmd = "L";
+                    while (cmd.pars.Count > 1)
+                    {
+                        SVGCommand clone = new SVGCommand();
+                        clone.command = clonecmd;
+                        clone.type = cmd.type;
+                        clone.pars.Add(cmd.pars[cmd.pars.Count - 1]);
+                        cmd.pars.RemoveAt(cmd.pars.Count - 1);
+                        sg.commands.Insert(j + 1, clone);
+                    }
+                    switch (cmd.command)
+                    {
+                        case "M":
+                            lastmove = (SVGCoordPair)cmd.pars[0];
+                            lastx = lastmove.x;
+                            lasty = lastmove.y;
+                            break;
+                        case "L":
+                            lastx = ((SVGCoordPair)cmd.pars[0]).x;
+                            lasty = ((SVGCoordPair)cmd.pars[0]).y;
+                            break;
+                        case "Z":
+                            lastx = lastmove.x;
+                            lasty = lastmove.y;
+                            break;
+                        case "C":
+                        case "S":
+                        case "Q":
+                        case "T":
+                        case "A":
+                        case "H":
+                        case "V":
+                    }
+                    
+                    
+                }                
+            }
+        }
+
+        //Since the gcode command set available doesn't support curves, need to convert any curves to a series of line segments
+        private void CalcCurves()
+        {
+            for (int i = 0; i < cmdgroups.Count; i++)
+            {
+                SVGCommandGroup sg = cmdgroups[i];
+                for (int j = 0; j < sg.commands.Count; j++)
+                {
+                    SVGCommand cmd = sg.commands[j];
+                    switch (cmd.command)
+                    {
+                        case "C":
+                            //Cubic bezier curve
+                            break;
+                        case "S":
+                            //"smooth" cubic bezier curve
+                            break;
+                        case "Q":
+                            //Quadratic bezier curve
+                            break;
+                        case "T":
+                            //"smooth" quadratic bezier curve
+                            break;
+                        case "A":
+                            //elliptical arc
+                            break;
+                        default:
+                            //leave the rest alone
+                            break;
+                    }
+                }
+            }
+        }
+
+        //Looks for any polygons (start==end or last command="Z") and separates them into their own groups.
+        private void PolyCheck()
+        {
+
         }
 
         private void ParseCommandGroups()
@@ -156,9 +248,9 @@ namespace SVGPlasma
                 case "S":
                     //2 pairs
                     EatWS();
-                    p2 = getCoordPair();
+                    p1 = getCoordPair();
                     EatWSComma();
-                    p3 = getCoordPair();
+                    p2 = getCoordPair();
                     cmd.pars.Add(new SVGDoubleCoordPair(p1,p2));
                     EatWSComma();                    
                     while (ts.peek().tokType == TokenType.Number)
@@ -320,112 +412,7 @@ namespace SVGPlasma
             throw new Exception("Invalid SVG File.  Unexpected token in path. '" + t.value + "'");
         }
 
-        /*
-        private void ParseCommand(string path)
-        {
-            if (path == "")
-                return;
-
-            path = path.Trim();
-            SVGCommand c = new SVGCommand();
-            int i = 0;
-            string t = "";
-            decimal x = 0;
-            decimal y = 0;
-            switch (path.Substring(0, 1))
-            {
-                case "M":
-                case "m":
-                    c.command = path.Substring(0, 1);
-                    c.type = SVGCmdType.Absolute;
-                    if (c.command == "m") c.type = SVGCmdType.Relative;
-                    c.command = c.command.ToUpper();
-                    path = path.Substring(1).Trim();
-                    //get the x coordinate
-                    i = path.IndexOf(" ");
-                    t = path.Substring(0, i);
-                    x = decimal.Parse(t);
-                    path = path.Substring(i).Trim();
-                    //get the y coordinate
-                    i = path.IndexOf(" ");
-                    t = path.Substring(0, i);
-                    y = decimal.Parse(t);
-                    path = path.Substring(i).Trim();
-                    c.point = new SVGPoint(x, y);
-                    commands.Add(c);
-                    break;
-                case "L":
-                case "l":
-                    c.command = path.Substring(0, 1);
-                    c.type = SVGCmdType.Absolute;
-                    if (c.command == "l") c.type = SVGCmdType.Relative;
-                    c.command = c.command.ToUpper();
-                    path = path.Substring(1).Trim();
-                    //get the x coordinate
-                    i= path.IndexOf(" ");
-                    t = path.Substring(0, i);
-                    x = decimal.Parse(t);
-                    path = path.Substring(i).Trim();
-                    //get the y coordinate
-                    i = path.IndexOf(" ");
-                    t = path.Substring(0, i);
-                    y = decimal.Parse(t);
-                    path = path.Substring(i).Trim();
-                    c.point = new SVGPoint(x, y);
-                    commands.Add(c);
-                    break;                    
-                case "Z":
-                case "z":
-                    c.command = path.Substring(0, 1);
-                    c.type = SVGCmdType.Absolute;
-                    if (c.command == "z") c.type = SVGCmdType.Relative;
-                    c.command = c.command.ToUpper();
-                    path = path.Substring(1).Trim();
-                    commands.Add(c);
-                    break;
-                default:
-                    throw new Exception("Unknown path command '" + path.Substring(0,1) + "'");
-            }
-            ParseCommand(path);
-        }
-
-        private void CreateObjects()
-        {
-            SVGObject o = new SVGObject();
-            SVGPoint last = null;
-            SVGPoint p = null;
-            SVGPoint first = null;
-            foreach (SVGCommand cmd in commands)
-            {
-                switch (cmd.command)
-                {
-                    case "M":
-                        p = cmd.point;
-                        if (cmd.type == SVGCmdType.Relative)
-                        {
-                            p.Add(last);
-                        }
-                        first = p;
-                        o.points.Add(p);
-                        last = p;
-                        break;
-                    case "L":
-                        p = cmd.point;
-                        if (cmd.type == SVGCmdType.Relative)
-                        {
-                            p.Add(last);
-                        }
-                        o.points.Add(p);
-                        last = p;
-                        break;
-                    case "Z":
-                        o.points.Add(first);
-                        objects.Add(o);
-                        o = new SVGObject();
-                        break;
-                }
-            }
-        }
+        /*        
         private void SortObjects()
         {
             bool changed = false;

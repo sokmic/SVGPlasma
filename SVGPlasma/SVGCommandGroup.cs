@@ -9,6 +9,8 @@ namespace SVGPlasma
     class SVGCommandGroup
     {
         public System.Collections.Generic.List<SVGCommand> commands = new List<SVGCommand>();
+        public bool isPolygon { get; set; }
+
         /*
         public SVGPoint this[int index]
         {
