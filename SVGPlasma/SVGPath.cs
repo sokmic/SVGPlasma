@@ -32,7 +32,7 @@ namespace SVGPlasma
         }
 
         //Breaks any commands with multiple argument sets into individual command objects
-        //Also convert H and V commands to L commands for ease of handling
+        //Also convert H and V commands to L commands for ease of handling later
         private void NormalizeCommands()
         {
             for(int i = 0; i< cmdgroups.Count;i++)
@@ -72,15 +72,42 @@ namespace SVGPlasma
                             lasty = lastmove.y;
                             break;
                         case "C":
+                            lastx = ((SVGTripleCoordPair)cmd.pars[0]).p3.x;
+                            lasty = ((SVGTripleCoordPair)cmd.pars[0]).p3.y;
+                            break;
                         case "S":
+                            lastx = ((SVGDoubleCoordPair)cmd.pars[0]).p2.x;
+                            lasty = ((SVGDoubleCoordPair)cmd.pars[0]).p2.y;
+                            break;
                         case "Q":
+                            lastx = ((SVGDoubleCoordPair)cmd.pars[0]).p2.x;
+                            lasty = ((SVGDoubleCoordPair)cmd.pars[0]).p2.y;
+                            break;
                         case "T":
+                            lastx = ((SVGCoordPair)cmd.pars[0]).x;
+                            lasty = ((SVGCoordPair)cmd.pars[0]).y;
+                            break;
                         case "A":
+                            lastx = ((SVGEArcArgs)cmd.pars[0]).p.x;
+                            lasty = ((SVGEArcArgs)cmd.pars[0]).p.y;
+                            break;
                         case "H":
+                            cmd.command = "L";
+                            if (cmd.type == SVGCmdType.Relative)
+                                cmd.pars[0] = new SVGCoordPair(((SVGCoord)cmd.pars[0]).n, 0);
+                            else
+                                cmd.pars[0] = new SVGCoordPair(((SVGCoord)cmd.pars[0]).n, lasty);
+                            break;
                         case "V":
-                    }
-                    
-                    
+                            cmd.command = "H";
+                            if (cmd.type == SVGCmdType.Relative)
+                                cmd.pars[0] = new SVGCoordPair(0,((SVGCoord)cmd.pars[0]).n);
+                            else
+                                cmd.pars[0] = new SVGCoordPair(lastx,((SVGCoord)cmd.pars[0]).n);
+                            break;
+                        default:
+                            break;  
+                    }                                       
                 }                
             }
         }
