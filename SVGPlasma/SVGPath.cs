@@ -117,7 +117,16 @@ namespace SVGPlasma
         {
             for (int i = 0; i < cmdgroups.Count; i++)
             {
+                SVGCoordPair lastCubicCP = null;
+                SVGCoordPair lastQuadCP = null;
                 SVGCommandGroup sg = cmdgroups[i];
+                SVGCoordPair lastmove = null;
+                decimal lastx = 0;
+                decimal lasty = 0;
+                SVGCoordPair[] cp;
+                SVGTripleCoordPair tp;
+                SVGDoubleCoordPair dp;
+                List<SVGCoordPair> points;
                 for (int j = 0; j < sg.commands.Count; j++)
                 {
                     SVGCommand cmd = sg.commands[j];
@@ -125,25 +134,172 @@ namespace SVGPlasma
                     {
                         case "C":
                             //Cubic bezier curve
+                            lastQuadCP = null;
+                            //prepare the parameters
+                            cp = new SVGCoordPair[4];
+                            cp[0] = new SVGCoordPair(lastx,lasty);
+                            tp = (SVGTripleCoordPair)cmd.pars[0];
+                            cp[1] = tp.p1;
+                            cp[2] = tp.p2;
+                            cp[3] = tp.p3;
+                            lastCubicCP = tp.p2;
+                            //get the list of points
+                            points = getBezierPoints(cp);
+                            //add them to the list of commands after the current command
+                            foreach(SVGCoordPair p in points)
+                            {
+                                SVGCommand newcmd = new SVGCommand();
+                                newcmd.command = "L";
+                                newcmd.type = SVGCmdType.Absolute;
+                                newcmd.pars.Add(p);
+                                sg.commands.Insert(j + 1, newcmd);
+                            }
+                            //remove the current command
+                            sg.commands.RemoveAt(j);
                             break;
                         case "S":
                             //"smooth" cubic bezier curve
+                            //1st control point is the reflection of the prior command's 2nd control point, relative to the current point
+                            //If there is no prior S or C command, 1st control point is the current point
+                            lastQuadCP = null;
+                            //prepare the parameters
+                            cp = new SVGCoordPair[4];
+                            cp[0] = new SVGCoordPair(lastx, lasty);
+                            dp = (SVGDoubleCoordPair)cmd.pars[0];
+                            if (lastCubicCP == null)
+                                cp[1] = new SVGCoordPair(lastx, lasty);
+                            else
+                                cp[1] = new SVGCoordPair(lastx + (lastx - lastCubicCP.x), lasty + (lasty - lastCubicCP.y));                            
+                            cp[2] = dp.p1;
+                            cp[3] = dp.p2;
+                            lastCubicCP = dp.p1;
+                            //get the list of points
+                            points = getBezierPoints(cp);
+                            //add them to the list of commands after the current command
+                            foreach (SVGCoordPair p in points)
+                            {
+                                SVGCommand newcmd = new SVGCommand();
+                                newcmd.command = "L";
+                                newcmd.type = SVGCmdType.Absolute;
+                                newcmd.pars.Add(p);
+                                sg.commands.Insert(j + 1, newcmd);
+                            }
+                            //remove the current command
+                            sg.commands.RemoveAt(j);
                             break;
                         case "Q":
                             //Quadratic bezier curve
+                            lastCubicCP = null;
+
+                            //prepare the parameters
+                            cp = new SVGCoordPair[3];
+                            cp[0] = new SVGCoordPair(lastx, lasty);
+                            dp = (SVGDoubleCoordPair)cmd.pars[0];
+                            cp[1] = dp.p1;
+                            cp[2] = dp.p2;
+                            lastQuadCP = dp.p1;
+                            //get the list of points
+                            points = getBezierPoints(cp);
+                            //add them to the list of commands after the current command
+                            foreach (SVGCoordPair p in points)
+                            {
+                                SVGCommand newcmd = new SVGCommand();
+                                newcmd.command = "L";
+                                newcmd.type = SVGCmdType.Absolute;
+                                newcmd.pars.Add(p);
+                                sg.commands.Insert(j + 1, newcmd);
+                            }
+                            //remove the current command
+                            sg.commands.RemoveAt(j);
                             break;
                         case "T":
                             //"smooth" quadratic bezier curve
+                            //control point is the reflection of the prior command's control point, relative to the current point
+                            //If there is no prior Q or T command, control point is the current point
+                            lastCubicCP = null;
+                            //prepare the parameters
+                            cp = new SVGCoordPair[3];
+                            cp[0] = new SVGCoordPair(lastx, lasty);
+                            SVGCoordPair pt = (SVGCoordPair)cmd.pars[0];
+                            if (lastQuadCP == null)
+                                cp[1] = new SVGCoordPair(lastx, lasty);
+                            else
+                                cp[1] = new SVGCoordPair(lastx + (lastx - lastQuadCP.x), lasty + (lasty - lastQuadCP.y));
+                            cp[2] = pt;
+                            lastQuadCP = cp[1];
+                            //get the list of points
+                            points = getBezierPoints(cp);
+                            //add them to the list of commands after the current command
+                            foreach (SVGCoordPair p in points)
+                            {
+                                SVGCommand newcmd = new SVGCommand();
+                                newcmd.command = "L";
+                                newcmd.type = SVGCmdType.Absolute;
+                                newcmd.pars.Add(p);
+                                sg.commands.Insert(j + 1, newcmd);
+                            }
+                            //remove the current command
+                            sg.commands.RemoveAt(j);
                             break;
                         case "A":
                             //elliptical arc
+                            lastCubicCP = null;
+                            lastQuadCP = null;
+                            break;
+                        case "M":
+                            lastCubicCP = null;
+                            lastQuadCP = null;
+                            lastmove = (SVGCoordPair)cmd.pars[0];
+                            lastx = lastmove.x;
+                            lasty = lastmove.y;
+                            break;
+                        case "L":
+                            lastCubicCP = null;
+                            lastQuadCP = null;
+                            lastx = ((SVGCoordPair)cmd.pars[0]).x;
+                            lasty = ((SVGCoordPair)cmd.pars[0]).y;
+                            break;
+                        case "Z":
+                            lastCubicCP = null;
+                            lastQuadCP = null;
+                            lastx = lastmove.x;
+                            lasty = lastmove.y;
                             break;
                         default:
-                            //leave the rest alone
+                            lastCubicCP = null;
+                            lastQuadCP = null;
                             break;
+
                     }
                 }
             }
+        }
+
+        private List<SVGCoordPair> getBezierPoints(SVGCoordPair[] points)
+        {
+            List<SVGCoordPair> bpoints = new List<SVGCoordPair>();
+            for (decimal t = 0.0M; t <=1.0M; t+=0.04M)
+            {
+                bpoints.Add(getSingleBezierPoint(points,t));
+            }
+            return bpoints;
+        }
+
+        private SVGCoordPair getSingleBezierPoint(SVGCoordPair[] points, decimal t)
+        {
+            if(points.Length==1)
+                return(points[0]);
+            else
+            {
+                SVGCoordPair[] np = new SVGCoordPair[points.Length-1];                
+                for (int i=0; i<np.Length; i++)
+                {
+                    decimal x = (1.0M - t) * points[i].x + t * points[i + 1].x;
+                    decimal y = (1.0M - t) * points[i].y + t * points[i + 1].y;
+                    np[i] = new SVGCoordPair(x,y);
+                }      
+                return getSingleBezierPoint(np,t);
+            }    
         }
 
         //Looks for any polygons (start==end or last command="Z") and separates them into their own groups.
