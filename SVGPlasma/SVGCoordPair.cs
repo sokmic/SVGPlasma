@@ -25,6 +25,12 @@ namespace SVGPlasma
             this.y = y;            
         }
 
+        public SVGCoordPair(double x, double y)
+        {
+            this.x = (decimal)x;
+            this.y = (decimal)y;
+        }
+
         public void Add(SVGCoordPair p)
         {
             this.x += p.x;

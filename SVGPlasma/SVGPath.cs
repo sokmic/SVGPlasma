@@ -245,6 +245,54 @@ namespace SVGPlasma
                             //elliptical arc
                             lastCubicCP = null;
                             lastQuadCP = null;
+                            //convert endpoint parameters to center based
+                            SVGEArcArgs args = (SVGEArcArgs)cmd.pars[0];
+                            double x1 = (double)lastx;
+                            double y1 = (double)lasty;
+                            double x2 = (double)args.p.x;
+                            double y2 = (double)args.p.y;
+                            bool fA = args.flag1;
+                            bool fS = args.flag2;
+                            double rx = (double)args.n1;
+                            double ry = (double)args.n2;
+                            double phi = (double)args.n3 * (Math.PI / 180);
+
+                            double x1prime = (Math.Cos(phi) * ((x1 - x2) / 2) + Math.Sin(phi) * ((x1 - x2) / 2));
+                            double y1prime = ((Math.Sin(phi) * -1) * ((y1 - y2) / 2) + Math.Cos(phi) * ((y1 - y2) / 2));
+                            double t1 = Math.Sqrt((Math.Pow(rx,2) * Math.Pow(ry,2) - Math.Pow(rx,2) * Math.Pow(y1prime,2) - Math.Pow(ry,2) * Math.Pow(x1prime,2)) / (Math.Pow(rx,2) * Math.Pow(y1prime,2) + Math.Pow(ry,2) * Math.Pow(x1prime,2)));
+                            if (fA && fS) t1 *= -1;
+                            double cxprime = t1 * ((rx * y1prime) / ry);
+                            double cyprime = t1 * (-1 * ((ry * x1prime) / rx));
+                            double cx = (Math.Cos(phi) * cxprime + (-1 * Math.Sin(phi)) * cxprime) + ((x1 + x2) / 2);
+                            double cy = (Math.Sin(phi) * cyprime + Math.Cos(phi) * cyprime) + ((y1 + y2) / 2);
+                            double ang1 = angleFunc(new SVGCoordPair(1M, 0M), new SVGCoordPair((x1prime - cxprime) / rx, (y1prime - cyprime) / ry));
+                            SVGCoordPair u = new SVGCoordPair((x1prime - cxprime) / rx, (y1prime - cyprime) / ry);
+                            SVGCoordPair v = new SVGCoordPair((-1 * x1prime - cxprime) / rx, (-1 * y1prime - cyprime) / ry);
+                            double angdelta = angleFunc(u, v) % 360;
+                            if (!fS && angdelta > 0)
+                                angdelta = angdelta - 360;
+                            else if (fS && angdelta < 0)
+                                angdelta = angdelta + 360;
+                            //now the equation is
+                            //x = xcenter + rx * cos(t)
+                            //y = ycenter + ry * sin(t)
+                            //with t going from ang1 to ang1 + angdelta
+                            decimal tdelt = (decimal)angdelta / 25; //do 25 subdivisions
+                            decimal tfin = (decimal)angdelta;
+                            //generate the points
+                            for (decimal t = (decimal)ang1; t <= tfin; t += tdelt)
+                            {
+                                SVGCommand newcmd = new SVGCommand();
+                                newcmd.command = "L";
+                                newcmd.type = SVGCmdType.Absolute;
+                                double a = ((double)t) * (Math.PI / 180);
+                                decimal ptx = (decimal)cx + args.n1 * (decimal)Math.Cos(a);
+                                decimal pty = (decimal)cy + args.n2 * (decimal)Math.Sin(a);
+                                newcmd.pars.Add(new SVGCoordPair(ptx, pty));
+                                sg.commands.Insert(j + 1, newcmd);
+                            }
+                            //remove the current command
+                            sg.commands.RemoveAt(j);
                             break;
                         case "M":
                             lastCubicCP = null;
@@ -269,10 +317,17 @@ namespace SVGPlasma
                             lastCubicCP = null;
                             lastQuadCP = null;
                             break;
-
                     }
                 }
             }
+        }
+
+        private double angleFunc(SVGCoordPair u, SVGCoordPair v)
+        {
+            int sign = Math.Sign(u.x * v.y - u.y * v.x);
+            double n = (double)(u.x * v.x + u.y * v.y);
+            double d = Math.Sqrt((double)(u.x * u.x + u.y * u.y)) * Math.Sqrt((double)(v.x * v.x + v.y * v.y));
+            return sign * (Math.Acos(n / d) / (Math.PI / 180));
         }
 
         private List<SVGCoordPair> getBezierPoints(SVGCoordPair[] points)
