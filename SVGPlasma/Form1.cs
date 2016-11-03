@@ -65,8 +65,7 @@ namespace SVGPlasma
                 string svgobj = d.Value;
                 p.Parse(svgobj);
             }
-
-            /*
+            
             //adjust for the width of the cutter
             if (gcmach.CutWidth > 0)
             {
@@ -78,7 +77,7 @@ namespace SVGPlasma
                     if(o.points[0].x == o.points[o.points.Count-1].x && o.points[0].y == o.points[o.points.Count-1].y && o.points.Count > 3)
                     {
                         //store the original values for use in calculations
-                        foreach(SVGPoint pt in o.points)
+                        foreach(SVGCoordPair pt in o.points)
                         {
                             pt.xOrig = pt.x;
                             pt.yOrig = pt.y;
@@ -86,24 +85,24 @@ namespace SVGPlasma
                         //last point and first point are the same.  Only have to do one of the two.
                         for (int i = 0; i < o.points.Count - 1; i++)
                         {
-                            SVGPoint p1;
+                            SVGCoordPair p1;
                             if (i == 0)
                                 p1 = o.points[o.points.Count - 2];
                             else
                                 p1 = o.points[i - 1];
-                            SVGPoint p2 = o.points[i];
-                            SVGPoint p3;
+                            SVGCoordPair p2 = o.points[i];
+                            SVGCoordPair p3;
                             if (i == o.points.Count - 2)
                                 p3 = o.points[0];
                             else
                                 p3 = o.points[i + 1];
 
                             //calculate the normal vector of segment 1 and segment 2
-                            SVGPoint n1 = GetNormal(p1, p2);
-                            SVGPoint n2 = GetNormal(p2, p3);
+                            SVGCoordPair n1 = GetNormal(p1, p2);
+                            SVGCoordPair n2 = GetNormal(p2, p3);
 
                             //the normal of the vertex will be the average of the 2 segment normals
-                            SVGPoint nv = new SVGPoint((n1.x + n2.x) / 2, (n1.y + n2.y) / 2);
+                            SVGCoordPair nv = new SVGCoordPair((n1.x + n2.x) / 2, (n1.y + n2.y) / 2);
 
                             if(nv.x == 0)
                             {
@@ -121,10 +120,10 @@ namespace SVGPlasma
                             {
                                 //get the slope
                                 decimal a = nv.y / nv.x;
-                                nv = GetPoint(a, gcmach.CutWidth);
+                                nv = GetVector(a, gcmach.CutWidth);
                             }
 
-                            SVGPoint t = new SVGPoint(p2.xOrig + nv.x, p2.yOrig + nv.y);
+                            SVGCoordPair t = new SVGCoordPair(p2.xOrig + nv.x, p2.yOrig + nv.y);
                             //if the point is inside the poly and it isn't the outer most object, we're good
                             if (o.isPointInside(t) && !lastobj)
                             {
@@ -155,43 +154,44 @@ namespace SVGPlasma
                 sout.WriteLine("G0 " + "X" + o.points[0].x.ToString() + " Y" + o.points[0].y.ToString());
                 sout.WriteLine(gcmach.SpindleOnCode);
                 sout.WriteLine("G4 P" + gcmat.PierceTime.ToString() + " ; penetrate");
-                foreach(SVGPoint pt in o.points)
+                foreach (SVGCoordPair pt in o.points)
                 {
                     sout.WriteLine("G1 " + "X" + pt.x.ToString() + " Y" + pt.y.ToString() + " F" + gcmat.FeedRate.ToString());
                 }
                 sout.WriteLine(gcmach.SpindleOffCode);
             }
             sout.Write(gcmach.EndCode);
-            sout.WriteLine();
-            */
+            sout.WriteLine();            
             sout.Close();             
             MessageBox.Show("File generated");
         }
 
         private SVGCoordPair GetNormal(SVGCoordPair p1, SVGCoordPair p2)
         {
+            //Get the normal vector of the line segment from p1 to p2
             if (p1.xOrig == p2.xOrig)
             {
                 //vertical line
                 //normal is horizontal line
-                return new SVGCoordPair(1, 0);                
+                return new SVGCoordPair(1M, 0M);
             }
             if (p1.yOrig == p2.yOrig)
             {
                 //horizontal line
                 //normal is a vertical line
-                return new SVGCoordPair(0, 1);
+                return new SVGCoordPair(0M, 1M);
             }
             //calculate the slope of the line
             decimal a = (p2.yOrig - p1.yOrig) / (p2.xOrig - p1.xOrig);
             //slope of the normal - reciprocal of the negative
             decimal an = -1 / a;
             //get a vector of length 1 with slope an
-            return GetPoint(an, 1);            
+            return GetVector(an, 1);            
         }
 
-        private SVGCoordPair GetPoint(decimal a, decimal l)
+        private SVGCoordPair GetVector(decimal a, decimal l)
         {
+            //generate a vector with slope of a and length of l
             // y=ax  and l^2 = x^2 + y^2
             // l^2 = x^2 + (ax)^2
             // l^2 = (a^2 + 1)x^2

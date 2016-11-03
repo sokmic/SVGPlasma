@@ -57,6 +57,7 @@
     <Compile Include="SVGCommand.cs" />
     <Compile Include="SVGCommandGroup.cs" />
     <Compile Include="SVGCoord.cs" />
+    <Compile Include="SVGObject.cs" />
     <Compile Include="SVGParameter.cs" />
     <Compile Include="SVGPath.cs" />
     <Compile Include="SVGCoordPair.cs" />

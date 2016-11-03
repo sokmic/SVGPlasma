@@ -9,6 +9,7 @@ namespace SVGPlasma
     class SVGPath
     {
         public System.Collections.Generic.List<SVGCommandGroup> cmdgroups = new List<SVGCommandGroup>();
+        public System.Collections.Generic.List<SVGObject> objects = new List<SVGObject>();
         SVGTokenStream ts;
 
         //Parses the SVG file and prepares it for gcode generation
@@ -24,15 +25,16 @@ namespace SVGPlasma
 
             CalcCurves();
 
+            //The path should now consist of nothing but M, L, and Z commands
             //create objects from the path (individual cuts to make)
-            //CreateObjects();
-            //sort the objects, inner most to outer most
-            //SortObjects();            
-            
+            CreateObjects();
+            //sort the objects, inner most to outer most so that the cuts on the inside are made before the cuts on the outside
+            SortObjects();            
         }
 
         //Breaks any commands with multiple argument sets into individual command objects
-        //Also convert H and V commands to L commands for ease of handling later
+        //Convert H and V commands to L commands for ease of handling later
+        //Change everything to absolute coordinates
         private void NormalizeCommands()
         {
             for(int i = 0; i< cmdgroups.Count;i++)
@@ -41,6 +43,9 @@ namespace SVGPlasma
                 SVGCoordPair lastmove = null;
                 decimal lastx = 0;
                 decimal lasty = 0;
+                SVGCoordPair p = null;
+                SVGTripleCoordPair tcp = null;
+                SVGDoubleCoordPair dcp = null;
                 for(int j = 0; j < sg.commands.Count; j++)
                 {
                     SVGCommand cmd = sg.commands[j];                    
@@ -59,51 +64,109 @@ namespace SVGPlasma
                     switch (cmd.command)
                     {
                         case "M":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                p = (SVGCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastmove = (SVGCoordPair)cmd.pars[0];
                             lastx = lastmove.x;
                             lasty = lastmove.y;
                             break;
                         case "L":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                p = (SVGCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = ((SVGCoordPair)cmd.pars[0]).x;
                             lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
                         case "Z":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                p = (SVGCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = lastmove.x;
                             lasty = lastmove.y;
                             break;
                         case "C":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                tcp = (SVGTripleCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGTripleCoordPair(new SVGCoordPair(tcp.p1.x + lastx, tcp.p1.y + lasty), new SVGCoordPair(tcp.p2.x + lastx, tcp.p2.y + lasty), new SVGCoordPair(tcp.p3.x + lastx, tcp.p3.y + lasty));
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = ((SVGTripleCoordPair)cmd.pars[0]).p3.x;
                             lasty = ((SVGTripleCoordPair)cmd.pars[0]).p3.y;
                             break;
                         case "S":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                dcp = (SVGDoubleCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGDoubleCoordPair(new SVGCoordPair(dcp.p1.x + lastx, dcp.p1.y + lasty), new SVGCoordPair(dcp.p2.x + lastx, dcp.p2.y + lasty));
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = ((SVGDoubleCoordPair)cmd.pars[0]).p2.x;
                             lasty = ((SVGDoubleCoordPair)cmd.pars[0]).p2.y;
                             break;
                         case "Q":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                dcp = (SVGDoubleCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGDoubleCoordPair(new SVGCoordPair(dcp.p1.x + lastx, dcp.p1.y + lasty), new SVGCoordPair(dcp.p2.x + lastx, dcp.p2.y + lasty));
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = ((SVGDoubleCoordPair)cmd.pars[0]).p2.x;
                             lasty = ((SVGDoubleCoordPair)cmd.pars[0]).p2.y;
                             break;
                         case "T":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                p = (SVGCoordPair)cmd.pars[0];
+                                cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = ((SVGCoordPair)cmd.pars[0]).x;
                             lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
                         case "A":
+                            if (cmd.type == SVGCmdType.Relative)
+                            {
+                                SVGEArcArgs e = (SVGEArcArgs)cmd.pars[0];
+                                cmd.pars[0] = new SVGEArcArgs(e.n1, e.n2, e.n3, e.flag1, e.flag2, new SVGCoordPair(p.x + lastx, p.y + lasty));
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             lastx = ((SVGEArcArgs)cmd.pars[0]).p.x;
                             lasty = ((SVGEArcArgs)cmd.pars[0]).p.y;
                             break;
                         case "H":
                             cmd.command = "L";
                             if (cmd.type == SVGCmdType.Relative)
-                                cmd.pars[0] = new SVGCoordPair(((SVGCoord)cmd.pars[0]).n, 0);
+                            {
+                                cmd.pars[0] = new SVGCoordPair(((SVGCoord)cmd.pars[0]).n + lastx, lasty);
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             else
                                 cmd.pars[0] = new SVGCoordPair(((SVGCoord)cmd.pars[0]).n, lasty);
+                            lastx = ((SVGCoordPair)cmd.pars[0]).x;
+                            lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
                         case "V":
                             cmd.command = "H";
                             if (cmd.type == SVGCmdType.Relative)
-                                cmd.pars[0] = new SVGCoordPair(0,((SVGCoord)cmd.pars[0]).n);
+                            {
+                                cmd.pars[0] = new SVGCoordPair(lastx, ((SVGCoord)cmd.pars[0]).n + lasty);
+                                cmd.type = SVGCmdType.Absolute;
+                            }
                             else
-                                cmd.pars[0] = new SVGCoordPair(lastx,((SVGCoord)cmd.pars[0]).n);
+                                cmd.pars[0] = new SVGCoordPair(lastx, ((SVGCoord)cmd.pars[0]).n);
+                            lastx = ((SVGCoordPair)cmd.pars[0]).x;
+                            lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
                         default:
                             break;  
@@ -355,12 +418,6 @@ namespace SVGPlasma
                 }      
                 return getSingleBezierPoint(np,t);
             }    
-        }
-
-        //Looks for any polygons (start==end or last command="Z") and separates them into their own groups.
-        private void PolyCheck()
-        {
-
         }
 
         private void ParseCommandGroups()
@@ -650,7 +707,42 @@ namespace SVGPlasma
             throw new Exception("Invalid SVG File.  Unexpected token in path. '" + t.value + "'");
         }
 
-        /*        
+        private void CreateObjects()
+        {
+            SVGObject o = new SVGObject();
+            SVGCoordPair last = null;
+            SVGCoordPair p = null;
+            SVGCoordPair first = null;
+            for (int i = 0; i < cmdgroups.Count; i++)
+            {                
+                SVGCommandGroup sg = cmdgroups[i];             
+                for (int j = 0; j < sg.commands.Count; j++)
+                {
+                    SVGCommand cmd = sg.commands[j];
+                    switch (cmd.command)
+                    {
+                        case "M":
+                            p = (SVGCoordPair)cmd.pars[0];                            
+                            first = p;
+                            o.points.Add(p);
+                            last = p;
+                            break;
+                        case "L":
+                            p = (SVGCoordPair)cmd.pars[0];                            
+                            o.points.Add(p);
+                            last = p;
+                            break;
+                        case "Z":
+                            o.points.Add(first);
+                            objects.Add(o);
+                            o = new SVGObject();
+                            break;
+                    }
+                }
+            }
+        }
+
+                
         private void SortObjects()
         {
             bool changed = false;
@@ -672,7 +764,6 @@ namespace SVGPlasma
                     }
                 }
             } while (changed);
-        }        
-        */
+        }                
     }
 }
