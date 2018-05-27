@@ -11,12 +11,14 @@ using System.Xml;
 
 namespace SVGPlasma
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             openFileDialog1.FileOk += openFileDialog1_FileOk;
+            cboMaterial.DataSource = Program.settings.materials;
+            cboMachine.DataSource = Program.settings.machines;
         }
 
         void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -31,8 +33,8 @@ namespace SVGPlasma
 
         private void cmdGenerate_Click(object sender, EventArgs e)
         {
-            GCodeMachineSettings gcmach = new GCodeMachineSettings();
-            GCodeMaterialSettings gcmat = new GCodeMaterialSettings();
+            GCodeMachineSettings gcmach = (GCodeMachineSettings)cboMachine.SelectedItem; //new GCodeMachineSettings();
+            GCodeMaterialSettings gcmat = (GCodeMaterialSettings)cboMaterial.SelectedItem;  //new GCodeMaterialSettings();
             string gcfilename = System.IO.Path.ChangeExtension(txtFileName.Text, "gcode");
 
             string xmlstr = System.IO.File.ReadAllText(txtFileName.Text);
@@ -201,6 +203,26 @@ namespace SVGPlasma
             decimal y = a * x;
 
             return new SVGCoordPair(x, y);
+        }
+
+        private void configureMachinesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ListMachines lm = new ListMachines();
+            lm.ShowDialog();
+            cboMachine.DataSource = null;
+            cboMachine.Items.Clear();
+            cboMachine.DataSource = Program.settings.machines;
+            cboMachine.DisplayMember = "MachineName";
+        }
+
+        private void configureMaterialsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ListMaterials lm = new ListMaterials();
+            lm.ShowDialog();
+            cboMaterial.DataSource = null;
+            cboMaterial.Items.Clear();
+            cboMaterial.DataSource = Program.settings.materials;
+            cboMaterial.DisplayMember = "MaterialName";
         }
     }
 }

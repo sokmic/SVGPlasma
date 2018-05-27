@@ -6,13 +6,16 @@ using System.Threading.Tasks;
 
 namespace SVGPlasma
 {
-    class GCodeMaterialSettings
+    public class GCodeMaterialSettings
     {
+        public string MaterialName { get; set; }
         public decimal PierceTime { get; set; } // seconds
         public decimal FeedRate { get; set; } // mm/min
         public GCodeMaterialSettings()
         {
-
+            MaterialName = "";
+            PierceTime = 0;
+            FeedRate = 0;
         }
     }
 }

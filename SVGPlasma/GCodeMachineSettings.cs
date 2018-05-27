@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SVGPlasma
 {
-    class GCodeMachineSettings
+    public class GCodeMachineSettings
     {
         public string MachineName { get; set; }
         public string BeginCode { get; set; }
@@ -17,7 +17,7 @@ namespace SVGPlasma
 
         public GCodeMachineSettings()
         {
-            MachineName = "Default Machine";
+            MachineName = "";
             BeginCode = "; begin g-code";
             EndCode = "; end g-code";
             SpindleOnCode = "M3";

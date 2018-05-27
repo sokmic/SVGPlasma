@@ -44,11 +44,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form1.cs">
+    <Compile Include="EditMaterial.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="EditMaterial.Designer.cs">
+      <DependentUpon>EditMaterial.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EditMachine.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EditMachine.Designer.cs">
+      <DependentUpon>EditMachine.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GCodeSettings.cs" />
+    <Compile Include="ListMaterials.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ListMaterials.Designer.cs">
+      <DependentUpon>ListMaterials.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ListMachines.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ListMachines.Designer.cs">
+      <DependentUpon>ListMachines.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="GCodeMachineSettings.cs" />
     <Compile Include="GCodeMaterialSettings.cs" />
@@ -66,8 +91,20 @@
     <Compile Include="SVGDoubleCoordPair.cs" />
     <Compile Include="SVGEArcArgs.cs" />
     <Compile Include="SVGTripleCoordPair.cs" />
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="EditMaterial.resx">
+      <DependentUpon>EditMaterial.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EditMachine.resx">
+      <DependentUpon>EditMachine.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ListMaterials.resx">
+      <DependentUpon>ListMaterials.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ListMachines.resx">
+      <DependentUpon>ListMachines.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
