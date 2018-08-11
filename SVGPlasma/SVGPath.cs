@@ -37,12 +37,12 @@ namespace SVGPlasma
         //Change everything to absolute coordinates
         private void NormalizeCommands()
         {
-            for(int i = 0; i< cmdgroups.Count;i++)
+            SVGCoordPair lastmove = null;
+            decimal lastx = 0;
+            decimal lasty = 0;
+            for (int i = 0; i< cmdgroups.Count;i++)
             {
-                SVGCommandGroup sg = cmdgroups[i];
-                SVGCoordPair lastmove = null;
-                decimal lastx = 0;
-                decimal lasty = 0;
+                SVGCommandGroup sg = cmdgroups[i];                
                 SVGCoordPair p = null;
                 SVGTripleCoordPair tcp = null;
                 SVGDoubleCoordPair dcp = null;
@@ -50,101 +50,121 @@ namespace SVGPlasma
                 {
                     SVGCommand cmd = sg.commands[j];                    
                     string clonecmd = cmd.command;
+                    //when an M command is followed by multiple sets of arguments, everything after the first is treated as an L command
                     if (clonecmd == "M")
                         clonecmd = "L";
+
+                    //split out all the argument sets after the first
                     while (cmd.pars.Count > 1)
                     {
                         SVGCommand clone = new SVGCommand();
                         clone.command = clonecmd;
                         clone.type = cmd.type;
+                        //pull a set of parameters off the end for the new command
                         clone.pars.Add(cmd.pars[cmd.pars.Count - 1]);
                         cmd.pars.RemoveAt(cmd.pars.Count - 1);
+                        //insert the new command immediately after the current command
                         sg.commands.Insert(j + 1, clone);
                     }
+
+                    //convert any relative commands to absolute and H+V to L
                     switch (cmd.command)
                     {
-                        case "M":
+                        case "M": //move
                             if (cmd.type == SVGCmdType.Relative)
                             {
-                                p = (SVGCoordPair)cmd.pars[0];
-                                cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
-                                cmd.type = SVGCmdType.Absolute;
+                                //a relative move at the start of a path is treated as absolute
+                                if(i == 0 && j == 0)
+                                {
+                                    cmd.type = SVGCmdType.Absolute;
+                                }
+                                else
+                                {
+                                    p = (SVGCoordPair)cmd.pars[0];
+                                    cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
+                                    cmd.type = SVGCmdType.Absolute;
+                                }                                                                
                             }
-                            lastmove = (SVGCoordPair)cmd.pars[0];
+                            lastmove = (SVGCoordPair)cmd.pars[0]; //save the move coords.  Needed for any Z commands
+                            //set current xy position
                             lastx = lastmove.x;
                             lasty = lastmove.y;
                             break;
-                        case "L":
+                        case "L": //draw line
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 p = (SVGCoordPair)cmd.pars[0];
                                 cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
                                 cmd.type = SVGCmdType.Absolute;
                             }
+                            //set current xy position
                             lastx = ((SVGCoordPair)cmd.pars[0]).x;
                             lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
-                        case "Z":
-                            if (cmd.type == SVGCmdType.Relative)
-                            {
-                                p = (SVGCoordPair)cmd.pars[0];
-                                cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
-                                cmd.type = SVGCmdType.Absolute;
-                            }
+                        case "Z": //close path
+                            //relative and absolute are the same difference
+                            //current xy position becomes equal to the last move done
                             lastx = lastmove.x;
                             lasty = lastmove.y;
+                            cmd.type = SVGCmdType.Absolute;
                             break;
-                        case "C":
+                        case "C": //bezier curve
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 tcp = (SVGTripleCoordPair)cmd.pars[0];
                                 cmd.pars[0] = new SVGTripleCoordPair(new SVGCoordPair(tcp.p1.x + lastx, tcp.p1.y + lasty), new SVGCoordPair(tcp.p2.x + lastx, tcp.p2.y + lasty), new SVGCoordPair(tcp.p3.x + lastx, tcp.p3.y + lasty));
                                 cmd.type = SVGCmdType.Absolute;
                             }
+                            //set current xy position
                             lastx = ((SVGTripleCoordPair)cmd.pars[0]).p3.x;
                             lasty = ((SVGTripleCoordPair)cmd.pars[0]).p3.y;
                             break;
-                        case "S":
+                        case "S": //smooth bezier curve
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 dcp = (SVGDoubleCoordPair)cmd.pars[0];
                                 cmd.pars[0] = new SVGDoubleCoordPair(new SVGCoordPair(dcp.p1.x + lastx, dcp.p1.y + lasty), new SVGCoordPair(dcp.p2.x + lastx, dcp.p2.y + lasty));
                                 cmd.type = SVGCmdType.Absolute;
                             }
+                            //set current xy position
                             lastx = ((SVGDoubleCoordPair)cmd.pars[0]).p2.x;
                             lasty = ((SVGDoubleCoordPair)cmd.pars[0]).p2.y;
                             break;
-                        case "Q":
+                        case "Q": //quadratic curve
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 dcp = (SVGDoubleCoordPair)cmd.pars[0];
                                 cmd.pars[0] = new SVGDoubleCoordPair(new SVGCoordPair(dcp.p1.x + lastx, dcp.p1.y + lasty), new SVGCoordPair(dcp.p2.x + lastx, dcp.p2.y + lasty));
                                 cmd.type = SVGCmdType.Absolute;
                             }
+                            //set current xy position
                             lastx = ((SVGDoubleCoordPair)cmd.pars[0]).p2.x;
                             lasty = ((SVGDoubleCoordPair)cmd.pars[0]).p2.y;
                             break;
-                        case "T":
+                        case "T": //smooth quadratic curve
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 p = (SVGCoordPair)cmd.pars[0];
                                 cmd.pars[0] = new SVGCoordPair(p.x + lastx, p.y + lasty);
                                 cmd.type = SVGCmdType.Absolute;
                             }
+                            //set current xy position
                             lastx = ((SVGCoordPair)cmd.pars[0]).x;
                             lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
-                        case "A":
+                        case "A": //arc
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 SVGEArcArgs e = (SVGEArcArgs)cmd.pars[0];
                                 cmd.pars[0] = new SVGEArcArgs(e.n1, e.n2, e.n3, e.flag1, e.flag2, new SVGCoordPair(p.x + lastx, p.y + lasty));
                                 cmd.type = SVGCmdType.Absolute;
                             }
+                            //set current xy position
                             lastx = ((SVGEArcArgs)cmd.pars[0]).p.x;
                             lasty = ((SVGEArcArgs)cmd.pars[0]).p.y;
                             break;
-                        case "H":
+                        case "H": //horizontal line
+                            //convert to a standard line
                             cmd.command = "L";
                             if (cmd.type == SVGCmdType.Relative)
                             {
@@ -153,11 +173,13 @@ namespace SVGPlasma
                             }
                             else
                                 cmd.pars[0] = new SVGCoordPair(((SVGCoord)cmd.pars[0]).n, lasty);
+                            //set current xy position
                             lastx = ((SVGCoordPair)cmd.pars[0]).x;
                             lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
-                        case "V":
-                            cmd.command = "H";
+                        case "V": //vertical line
+                            //convert to a standard line
+                            cmd.command = "L";
                             if (cmd.type == SVGCmdType.Relative)
                             {
                                 cmd.pars[0] = new SVGCoordPair(lastx, ((SVGCoord)cmd.pars[0]).n + lasty);
@@ -165,6 +187,7 @@ namespace SVGPlasma
                             }
                             else
                                 cmd.pars[0] = new SVGCoordPair(lastx, ((SVGCoord)cmd.pars[0]).n);
+                            //set current xy position
                             lastx = ((SVGCoordPair)cmd.pars[0]).x;
                             lasty = ((SVGCoordPair)cmd.pars[0]).y;
                             break;
@@ -209,8 +232,9 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            foreach(SVGCoordPair p in points)
+                            for(int w = points.Count-1; w >=0; w--)
                             {
+                                SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
                                 newcmd.command = "L";
                                 newcmd.type = SVGCmdType.Absolute;
@@ -239,8 +263,9 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            foreach (SVGCoordPair p in points)
+                            for(int w = points.Count-1; w >= 0; w--)
                             {
+                                SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
                                 newcmd.command = "L";
                                 newcmd.type = SVGCmdType.Absolute;
@@ -264,8 +289,9 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            foreach (SVGCoordPair p in points)
+                            for(int w = points.Count-1; w >= 0; w--)
                             {
+                                SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
                                 newcmd.command = "L";
                                 newcmd.type = SVGCmdType.Absolute;
@@ -293,8 +319,9 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            foreach (SVGCoordPair p in points)
+                            for (int w = points.Count - 1; w >= 0; w--)
                             {
+                                SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
                                 newcmd.command = "L";
                                 newcmd.type = SVGCmdType.Absolute;
@@ -343,7 +370,8 @@ namespace SVGPlasma
                             decimal tdelt = (decimal)angdelta / 25; //do 25 subdivisions
                             decimal tfin = (decimal)angdelta;
                             //generate the points
-                            for (decimal t = (decimal)ang1; t <= tfin; t += tdelt)
+                            //for (decimal t = (decimal)ang1; t <= tfin; t += tdelt)
+                            for (decimal t = tfin; t >= (decimal)ang1; t-= tdelt)                            
                             {
                                 SVGCommand newcmd = new SVGCommand();
                                 newcmd.command = "L";
@@ -455,7 +483,7 @@ namespace SVGPlasma
 
             SVGCommand cmd = new SVGCommand();
             cmd.command = t.value;
-            if (char.IsLower(cmd.command, 1))
+            if (char.IsLower(cmd.command, 0))
                 cmd.type = SVGCmdType.Relative;
             else
                 cmd.type = SVGCmdType.Absolute;
