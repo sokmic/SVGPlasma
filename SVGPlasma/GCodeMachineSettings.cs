@@ -20,8 +20,8 @@ namespace SVGPlasma
             MachineName = "";
             BeginCode = "; begin g-code";
             EndCode = "; end g-code";
-            SpindleOnCode = "M3";
-            SpindleOffCode = "M4";
+            SpindleOnCode = "M3 S255";
+            SpindleOffCode = "M5";
             CutWidth = 0;
         }        
     }
