@@ -46,8 +46,8 @@ namespace SVGPlasma
                 case '\v':
                 case '\f':
                 case '\r':
-                    //whitespace
-                    return new SVGToken(new string(c,1), TokenType.Whitespace);
+                    //whitespace - ignore it and return the next token
+                    return getToken();
                 case 'M':
                 case 'm':
                 case 'Z':
@@ -70,7 +70,8 @@ namespace SVGPlasma
                 case 'a':
                     return new SVGToken(new string(c, 1), TokenType.Command);
                 case ',':
-                    return new SVGToken(new string(c, 1), TokenType.Comma);
+                    //comma - ignore it and return the next token
+                    return getToken();
                 case '+':
                 case '-':
                 case '0':

@@ -47,27 +47,38 @@ namespace SVGPlasma
             xml.LoadXml(xmlstr);
             XmlNamespaceManager ns = new XmlNamespaceManager(xml.NameTable);
             ns.AddNamespace("svg", "http://www.w3.org/2000/svg");
-            XmlNode svg = xml.DocumentElement;            
-            XmlNode title = svg.SelectSingleNode("svg:title",ns);
-            XmlNode desc = svg.SelectSingleNode("svg:desc",ns);
-            XmlNode path = svg.SelectSingleNode("svg:path",ns);
-            if (title != null)
+            XmlNode svgNode = xml.DocumentElement;            
+            XmlNode titleNode = svgNode.SelectSingleNode("svg:title",ns);
+            XmlNode descNode = svgNode.SelectSingleNode("svg:desc",ns);
+            XmlNodeList pathNodes = svgNode.SelectNodes("//svg:path",ns);
+            if (titleNode != null)
             {
-                sout.WriteLine("; Object Title: " + title.InnerText);             
+                sout.WriteLine("; Object Title: " + titleNode.InnerText);             
             }
-            if (desc != null)
+            if (descNode != null)
             {
-                sout.WriteLine("; Object Description: " + desc.InnerText);
+                sout.WriteLine("; Object Description: " + descNode.InnerText);
             }
 
-            SVGPath p = new SVGPath();
-            if (path != null)
+            var paths = new List<SVGPath>();            
+            if (pathNodes != null)
             {
-                XmlNode d = path.Attributes.GetNamedItem("d");
-                string svgobj = d.Value;
-                p.Parse(svgobj);
+                foreach (XmlNode pathNode in pathNodes)
+                {
+                    //for each <path> node, parse the path string, then split into subpaths
+                    SVGPath p = new SVGPath();
+                    XmlNode d = pathNode.Attributes.GetNamedItem("d");
+                    string svgobj = d.Value;
+                    p.Parse(svgobj);
+                    List<SVGPath> splitPaths = p.Split();
+                    paths.AddRange(splitPaths);
+                }
             }
+
+
+
             
+            /*
             //adjust for the width of the cutter
             if (gcmach.CutWidth > 0)
             {
@@ -163,11 +174,13 @@ namespace SVGPlasma
                 sout.WriteLine(gcmach.SpindleOffCode);
             }
             sout.Write(gcmach.EndCode);
-            sout.WriteLine();            
+            sout.WriteLine();         
+            */
             sout.Close();             
             MessageBox.Show("File generated");
         }
 
+        /*
         private SVGCoordPair GetNormal(SVGCoordPair p1, SVGCoordPair p2)
         {
             //Get the normal vector of the line segment from p1 to p2
@@ -204,6 +217,7 @@ namespace SVGPlasma
 
             return new SVGCoordPair(x, y);
         }
+        */
 
         private void configureMachinesToolStripMenuItem_Click(object sender, EventArgs e)
         {

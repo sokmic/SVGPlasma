@@ -44,29 +44,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EditMaterial.cs">
+    <Compile Include="Coordinate.cs" />
+    <Compile Include="Settings\EditMaterial.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="EditMaterial.Designer.cs">
+    <Compile Include="Settings\EditMaterial.Designer.cs">
       <DependentUpon>EditMaterial.cs</DependentUpon>
     </Compile>
-    <Compile Include="EditMachine.cs">
+    <Compile Include="Settings\EditMachine.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="EditMachine.Designer.cs">
+    <Compile Include="Settings\EditMachine.Designer.cs">
       <DependentUpon>EditMachine.cs</DependentUpon>
     </Compile>
-    <Compile Include="GCodeSettings.cs" />
-    <Compile Include="ListMaterials.cs">
+    <Compile Include="Settings\GCodeSettings.cs" />
+    <Compile Include="Settings\ListMaterials.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ListMaterials.Designer.cs">
+    <Compile Include="Settings\ListMaterials.Designer.cs">
       <DependentUpon>ListMaterials.cs</DependentUpon>
     </Compile>
-    <Compile Include="ListMachines.cs">
+    <Compile Include="Settings\ListMachines.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ListMachines.Designer.cs">
+    <Compile Include="Settings\ListMachines.Designer.cs">
       <DependentUpon>ListMachines.cs</DependentUpon>
     </Compile>
     <Compile Include="MainForm.cs">
@@ -75,32 +76,34 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="GCodeMachineSettings.cs" />
-    <Compile Include="GCodeMaterialSettings.cs" />
+    <Compile Include="Settings\GCodeMachineSettings.cs" />
+    <Compile Include="Settings\GCodeMaterialSettings.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SVGCommand.cs" />
-    <Compile Include="SVGCommandGroup.cs" />
-    <Compile Include="SVGCoord.cs" />
-    <Compile Include="SVGObject.cs" />
-    <Compile Include="SVGParameter.cs" />
+    <Compile Include="SVGCommands\SVGCommand.cs" />
+    <Compile Include="SVGCommands\SVGCommandClosePath.cs" />
+    <Compile Include="SVGCommands\SVGCommandEllipse.cs" />
+    <Compile Include="SVGCommands\SVGCommandQuadSmooth.cs" />
+    <Compile Include="SVGCommands\SVGCommandQuadCurve.cs" />
+    <Compile Include="SVGCommands\SVGCommandCubicSmooth.cs" />
+    <Compile Include="SVGCommands\SVGCommandLineVertical.cs" />
+    <Compile Include="SVGCommands\SVGCommandLineHorizontal.cs" />
+    <Compile Include="SVGCommands\SVGCommandLineTo.cs" />
+    <Compile Include="SVGCommands\SVGCommandCubicCurve.cs" />
+    <Compile Include="SVGCommands\SVGCommandMove.cs" />
     <Compile Include="SVGPath.cs" />
-    <Compile Include="SVGCoordPair.cs" />
-    <Compile Include="SVGToken.cs" />
-    <Compile Include="SVGTokenStream.cs" />
-    <Compile Include="SVGDoubleCoordPair.cs" />
-    <Compile Include="SVGEArcArgs.cs" />
-    <Compile Include="SVGTripleCoordPair.cs" />
-    <EmbeddedResource Include="EditMaterial.resx">
+    <Compile Include="Tokenization\SVGToken.cs" />
+    <Compile Include="Tokenization\SVGTokenStream.cs" />
+    <EmbeddedResource Include="Settings\EditMaterial.resx">
       <DependentUpon>EditMaterial.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="EditMachine.resx">
+    <EmbeddedResource Include="Settings\EditMachine.resx">
       <DependentUpon>EditMachine.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ListMaterials.resx">
+    <EmbeddedResource Include="Settings\ListMaterials.resx">
       <DependentUpon>ListMaterials.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ListMachines.resx">
+    <EmbeddedResource Include="Settings\ListMachines.resx">
       <DependentUpon>ListMachines.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">

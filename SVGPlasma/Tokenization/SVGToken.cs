@@ -7,16 +7,14 @@ using System.Threading.Tasks;
 namespace SVGPlasma
 {
     public enum TokenType
-    {
-        Whitespace,
+    {        
         Command,
-        Number,
-        Comma,        
+        Number,     
         Error,
         EOP
     }
 
-    class SVGToken
+    class SVGToken : IDisposable
     {
         public string value { get; set; }
         public TokenType tokType { get; set; }
@@ -27,5 +25,8 @@ namespace SVGPlasma
             tokType = tok;
         }
 
+        public void Dispose()
+        {
+        }
     }
 }
