@@ -50,7 +50,7 @@ namespace SVGPlasma
             XmlNode svg = xml.DocumentElement;            
             XmlNode title = svg.SelectSingleNode("svg:title",ns);
             XmlNode desc = svg.SelectSingleNode("svg:desc",ns);
-            XmlNode path = svg.SelectSingleNode("svg:path",ns);
+            XmlNodeList pathNodes = svg.SelectNodes("//svg:path", ns);
             if (title != null)
             {
                 sout.WriteLine("; Object Title: " + title.InnerText);             
@@ -61,11 +61,14 @@ namespace SVGPlasma
             }
 
             SVGPath p = new SVGPath();
-            if (path != null)
+            foreach (XmlNode path in pathNodes)
             {
-                XmlNode d = path.Attributes.GetNamedItem("d");
-                string svgobj = d.Value;
-                p.Parse(svgobj);
+                if (path != null)
+                {
+                    XmlNode d = path.Attributes.GetNamedItem("d");
+                    string svgobj = d.Value;
+                    p.Parse(svgobj);
+                }
             }
             
             //adjust for the width of the cutter

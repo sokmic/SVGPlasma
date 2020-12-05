@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,9 +28,10 @@ namespace SVGPlasma
 
             //The path should now consist of nothing but M, L, and Z commands
             //create objects from the path (individual cuts to make)
+            objects = new List<SVGObject>();
             CreateObjects();
             //sort the objects, inner most to outer most so that the cuts on the inside are made before the cuts on the outside
-            SortObjects();            
+            SortObjects();
         }
 
         //Breaks any commands with multiple argument sets into individual command objects
@@ -232,7 +234,8 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            for(int w = points.Count-1; w >=0; w--)
+                            //points are loaded end to start
+                            for (int w = points.Count-1; w >=0; w--)
                             {
                                 SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
@@ -263,7 +266,8 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            for(int w = points.Count-1; w >= 0; w--)
+                            //points are loaded end to start
+                            for (int w = points.Count-1; w >= 0; w--)
                             {
                                 SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
@@ -289,7 +293,8 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
-                            for(int w = points.Count-1; w >= 0; w--)
+                            //points are loaded end to start
+                            for (int w = points.Count-1; w >= 0; w--)
                             {
                                 SVGCoordPair p = points[w];
                                 SVGCommand newcmd = new SVGCommand();
@@ -319,6 +324,7 @@ namespace SVGPlasma
                             //get the list of points
                             points = getBezierPoints(cp);
                             //add them to the list of commands after the current command
+                            //points are loaded end to start
                             for (int w = points.Count - 1; w >= 0; w--)
                             {
                                 SVGCoordPair p = points[w];
@@ -335,7 +341,7 @@ namespace SVGPlasma
                             //elliptical arc
                             lastCubicCP = null;
                             lastQuadCP = null;
-
+                            
                             //convert endpoint parameters to center based
                             SVGEArcArgs args = (SVGEArcArgs)cmd.pars[0];
                             //x1,y1 is start point
@@ -409,20 +415,26 @@ namespace SVGPlasma
                                 //y = ycenter + ry * sin(t)
                                 //with t going from ang1 to ang1 + angdelta
                                 decimal tdelt = (decimal)angdelta / 25; //do 25 subdivisions
-                                decimal tfin = (decimal)angdelta;
-                                //generate the points
-                                //for (decimal t = (decimal)ang1; t <= tfin; t += tdelt)
+                                decimal tfin = (decimal) ang1 + (decimal)angdelta;
+                                //points are loaded end to start
+                                //make sure we complete with a line to the final point
+                                var finalcmd = new SVGCommand();
+                                finalcmd.command = "L";
+                                finalcmd.type = SVGCmdType.Absolute;
+                                finalcmd.pars.Add(new SVGCoordPair(x2, y2));
+                                sg.commands.Insert(j + 1, finalcmd);
+                                //generate the points                                
                                 for (decimal t = tfin; t >= (decimal)ang1; t -= tdelt)
                                 {
                                     SVGCommand newcmd = new SVGCommand();
                                     newcmd.command = "L";
                                     newcmd.type = SVGCmdType.Absolute;
                                     double a = ConvertDegreesToRadians((double)t);
-                                    decimal ptx = (decimal)cx + args.n1 * (decimal)Math.Cos(a);
-                                    decimal pty = (decimal)cy + args.n2 * (decimal)Math.Sin(a);
+                                    decimal ptx = (decimal)(Math.Cos(phi) * rx * Math.Cos(a) - Math.Sin(phi) * ry * Math.Sin(a) + cx);
+                                    decimal pty = (decimal)(Math.Sin(phi) * rx * Math.Cos(a) + Math.Cos(phi) * ry * Math.Sin(a) + cy);
                                     newcmd.pars.Add(new SVGCoordPair(ptx, pty));
                                     sg.commands.Insert(j + 1, newcmd);
-                                }
+                                }                                
                             }
                             //remove the current command
                             sg.commands.RemoveAt(j);
@@ -459,6 +471,7 @@ namespace SVGPlasma
         private double angleFunc(SVGCoordPair u, SVGCoordPair v)
         {
             int sign = Math.Sign(u.x * v.y - u.y * v.x);
+            if (sign == 0) sign = 1;
             double n = (double)(u.x * v.x + u.y * v.y);
             double d = Math.Sqrt((double)(u.x * u.x + u.y * u.y)) * Math.Sqrt((double)(v.x * v.x + v.y * v.y));
             return ConvertRadiansToDegrees(sign * Math.Acos(n / d));
